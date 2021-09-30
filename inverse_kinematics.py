@@ -4,12 +4,17 @@
 import modern_robotics as mr
 # Import the numpy library with shorthand np
 import numpy as np
+# Import pyplot with shorthand plt
+import matplotlib.pyplot as plt
 # Import everything from the math library
 from math import *
-
 # Define helpful functions at the start, from the linear algebra library
 norm = np.linalg.norm
 pinv = np.linalg.pinv
+
+import matplotlib
+
+matplotlib.rcParams['text.usetex'] = True
 
 # Define a reasonable tolerance for algorithms
 tol = 1e-8
@@ -68,13 +73,15 @@ def MatrixLog6(T):
     # [  0  0  ]
     return np.vstack((np.hstack((w_mat, v_vec)), np.zeros((1, 4))))
 
-def IKinSpace(Slist, M, Tsd, thetalist0, eps_w, eps_v, maxiterations=20):
+def IKinSpace(Slist, M, Tsd, thetalist0, eps_w, eps_v, maxiterations=20, get_data=False):
     """
     Calculates the inverse kinematics solution numerically
     Using the Newton-Raphson Method in the space frame
     """
     # Initialize the array of theta
     thetalist = np.array(thetalist0).copy()
+    if get_data:
+        data = np.zeros(shape=(maxiterations, 8))
     for i in range(maxiterations):
         # Calculate the current transformation given theta
         Tsb = mr.FKinSpace(M, Slist, thetalist)
@@ -90,12 +97,20 @@ def IKinSpace(Slist, M, Tsd, thetalist0, eps_w, eps_v, maxiterations=20):
         vs = np.array([Vs[3], Vs[4], Vs[5]])
         # If the error is less than the tolerance, break.
         err = norm(ws) > eps_w or norm(vs) > eps_v
+        if get_data:
+            data[i, :6] = thetalist
+            data[i, 6:] = np.array([norm(ws), norm(vs)])
         if not err:
+            if get_data:
+                data = data[:i,:]
             break
         # Calculate the Jacobian and adjust theta, based on the error
         Js = mr.JacobianSpace(Slist, thetalist)
         thetalist += pinv(Js) @ Vs
-    return (thetalist, not err)
+    if get_data:
+        return (thetalist, not err, data)
+    else:
+        return (thetalist, not err)
 
 # Define end-effector pose in zero configuration
 M = np.array([
@@ -116,18 +131,33 @@ S6 = np.array([ 0, 1,  0, H2 - H1,       0, L1 + L2 ])
 # Create list of screw axes
 Slist = np.array([S1, S2, S3, S4, S5, S6])
 # Create test list of theta to generate desired pose
-thetalist = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
+thetalist = 2 * pi * (np.random.random((6,)) - 0.5)
 # Use forward kinematics to calculate desired pose
 Tsd = mr.FKinSpace(M, Slist, thetalist)
 # Generate initial list of theta
-thetalist0 = np.array([1.2, 1.2, 1.2, 1.2, 1.2, 1.2])
+thetalist0 = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
 
 # Use the NR method to calculate solution theta
-thetalistsol, success = IKinSpace(Slist, M, Tsd, thetalist0, 1e-3, 1e-3)
+thetalistsol, success, data = IKinSpace(Slist, M, Tsd, thetalist0, 1e-9, 1e-9, maxiterations=100, get_data=True)
+print(thetalistsol)
 # Use forward kinematics to calculate pose from solution theta
 Tsol = mr.FKinSpace(M, Slist, thetalistsol)
-
 # If the algorithm returned a success, print the transformation matrices
 if success:
     print(Tsd)
     print(Tsol)
+
+
+
+plt.plot(data[:, 6:8])
+plt.title("Error of Newton-Raphson Algorithm")
+plt.xlabel("Num. Iterations")
+plt.ylabel("Error (rad, m)")
+plt.legend([r"$\omega_{s}$", r"$v_{s}$"])
+plt.figure()
+plt.plot(data[:, :6])
+plt.title("Angles of Newton-Raphson Algorithm")
+plt.xlabel("Num. Iterations")
+plt.ylabel("Angles (rad)")
+plt.legend([r"$\theta_{1}$", r"$\theta_{2}$", r"$\theta_{3}$", r"$\theta_{4}$", r"$\theta_{5}$", r"$\theta_{6}$"])
+plt.show()
