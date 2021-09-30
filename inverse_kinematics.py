@@ -27,6 +27,20 @@ W2 = 93e-3
 H1 = 89.159e-3
 H2 = 94.65e-3
 
+def plot_data(data):
+    plt.plot(data[:, 6:8])
+    plt.title("Error of Newton-Raphson Algorithm")
+    plt.xlabel("Num. Iterations")
+    plt.ylabel("Error (rad, m)")
+    plt.legend([r"$\omega_{s}$", r"$v_{s}$"])
+    plt.figure()
+    plt.plot(data[:, :6])
+    plt.title("Angles of Newton-Raphson Algorithm")
+    plt.xlabel("Num. Iterations")
+    plt.ylabel("Angles (rad)")
+    plt.legend([r"$\theta_{1}$", r"$\theta_{2}$", r"$\theta_{3}$", r"$\theta_{4}$", r"$\theta_{5}$", r"$\theta_{6}$"])
+    plt.show()
+
 def MatrixLog6(T):
     """
     Calculates the logarithm of the transformation T
@@ -147,17 +161,4 @@ if success:
     print(Tsd)
     print(Tsol)
 
-
-
-plt.plot(data[:, 6:8])
-plt.title("Error of Newton-Raphson Algorithm")
-plt.xlabel("Num. Iterations")
-plt.ylabel("Error (rad, m)")
-plt.legend([r"$\omega_{s}$", r"$v_{s}$"])
-plt.figure()
-plt.plot(data[:, :6])
-plt.title("Angles of Newton-Raphson Algorithm")
-plt.xlabel("Num. Iterations")
-plt.ylabel("Angles (rad)")
-plt.legend([r"$\theta_{1}$", r"$\theta_{2}$", r"$\theta_{3}$", r"$\theta_{4}$", r"$\theta_{5}$", r"$\theta_{6}$"])
-plt.show()
+plot_data(data)
