@@ -1,5 +1,3 @@
-#/usr/bin/python3
-
 PLOT_DATA = True
 
 # Import the modern robotics library with shorthand mr
