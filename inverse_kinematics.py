@@ -1,20 +1,24 @@
 #/usr/bin/ python3
 
+PLOT_DATA = True
+
 # Import the modern robotics library with shorthand mr
 import modern_robotics as mr
 # Import the numpy library with shorthand np
 import numpy as np
 # Import pyplot with shorthand plt
-import matplotlib.pyplot as plt
+if PLOT_DATA:
+    import matplotlib
+    import matplotlib.pyplot as plt
+    matplotlib.rcParams['text.usetex'] = True
+
 # Import everything from the math library
 from math import *
 # Define helpful functions at the start, from the linear algebra library
 norm = np.linalg.norm
 pinv = np.linalg.pinv
 
-import matplotlib
 
-matplotlib.rcParams['text.usetex'] = True
 
 # Define a reasonable tolerance for algorithms
 tol = 1e-8
@@ -124,7 +128,7 @@ def IKinSpace(Slist, M, Tsd, thetalist0, eps_w, eps_v, maxiterations=20, get_dat
     if get_data:
         return (thetalist, not err, data)
     else:
-        return (thetalist, not err)
+        return (thetalist, not err, None)
 
 # Define end-effector pose in zero configuration
 M = np.array([
@@ -145,20 +149,31 @@ S6 = np.array([ 0, 1,  0, H2 - H1,       0, L1 + L2 ])
 # Create list of screw axes
 Slist = np.array([S1, S2, S3, S4, S5, S6])
 # Create test list of theta to generate desired pose
-thetalist = 2 * pi * (np.random.random((6,)) - 0.5)
+thetalist = pi * (np.random.random((6,)) - 0.5)
+thetalist[0] = 1.0
+print("Desired Angles:")
+print(thetalist)
 # Use forward kinematics to calculate desired pose
 Tsd = mr.FKinSpace(M, Slist, thetalist)
 # Generate initial list of theta
-thetalist0 = np.array([0.1, 0.1, 0.1, 0.1, 0.1, 0.1])
+thetalist0 = np.array([1.0 - pi, 0.5, -0.1, 0.5, -0.4, 0.3])
 
 # Use the NR method to calculate solution theta
-thetalistsol, success, data = IKinSpace(Slist, M, Tsd, thetalist0, 1e-9, 1e-9, maxiterations=100, get_data=True)
+thetalistsol, success, data = IKinSpace(Slist, M, Tsd, thetalist0, 1e-3, 1e-3, maxiterations=100, get_data=PLOT_DATA)
+print("Actual Angles:")
 print(thetalistsol)
 # Use forward kinematics to calculate pose from solution theta
 Tsol = mr.FKinSpace(M, Slist, thetalistsol)
 # If the algorithm returned a success, print the transformation matrices
-if success:
-    print(Tsd)
-    print(Tsol)
 
-plot_data(data)
+print("Desired Pose:")
+print(Tsd)
+print("Actual Pose:")
+print(Tsol)
+if success:
+    print("Success!")
+else:
+    print("Failed to reach pose...")
+
+if PLOT_DATA:
+    plot_data(data)
