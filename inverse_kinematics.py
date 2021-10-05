@@ -145,9 +145,9 @@ S5 = np.array([ 0, 0, -1,     -W1, L1 + L2,       0 ])
 S6 = np.array([ 0, 1,  0, H2 - H1,       0, L1 + L2 ])
 
 # Create list of screw axes
-Slist = np.array([S1, S2, S3, S4, S5, S6])
+Slist = np.array([S1, S2, S3, S4, S5, S6]).T
 # Create test list of theta to generate desired pose
-thetalist = pi * (np.random.random((6,)) - 0.5)
+thetalist = 2 * pi * (np.random.random((6,)) - 0.5)
 thetalist[0] = 1.0
 print("Desired Angles:")
 print(thetalist)
